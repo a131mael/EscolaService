@@ -1,0 +1,6 @@
+org\escola\service\RecadoService.class
+org\escola\service\MemberRegistration.class
+EscolaServices\org\aaf\services\NewSessionBean.class
+org\escola\util\Service.class
+org\escola\service\GradeService.class
+org\escola\util\JsonReader.class
