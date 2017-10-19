@@ -3,6 +3,7 @@ package org.escola.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,10 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
 
 import org.aaf.dto.RecadoDTO;
+import org.aaf.dto.RecadoDestinatarioDTO;
+import org.escola.model.Member;
 import org.escola.model.Recado;
+import org.escola.model.RecadoDestinatario;
 import org.escola.util.Service;
 
 
@@ -48,6 +52,11 @@ public class RecadoService extends Service implements Serializable {
 		return em.find(Recado.class, id);
 	}
 	
+	private RecadoDestinatario findByIdRecadoDestinatario(Long id) {
+		return em.find(RecadoDestinatario.class, id);
+	}
+
+	
 	public Recado findByCodigo(Long id) {
 		return em.find(Recado.class, id);
 	}
@@ -62,11 +71,29 @@ public class RecadoService extends Service implements Serializable {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			CriteriaQuery<Recado> criteria = cb.createQuery(Recado.class);
 			Root<Recado> member = criteria.from(Recado.class);
-			// Swap criteria statements if you would like to try out type-safe
-			// criteria queries, a new
-			// feature in JPA 2.0
-			// criteria.select(member).orderBy(cb.asc(member.get(Member_.name)));
-			criteria.select(member).orderBy(cb.asc(member.get("id")));
+			criteria.select(member).orderBy(cb.desc(member.get("dataParaExibicao")));
+			return em.createQuery(criteria).getResultList();
+	
+		}catch(NoResultException nre){
+			return new ArrayList<>();
+		}catch(Exception e){
+			e.printStackTrace();
+			return new ArrayList<>();
+		}
+	}
+	
+	public List<Recado> findAll(String idMember) {
+		try{
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+			CriteriaQuery<Recado> criteria = cb.createQuery(Recado.class);
+			Root<Recado> member = criteria.from(Recado.class);
+			
+			
+		//	Predicate where = null;
+
+			//where = cb.equal(member.get("codigo"), codigo); fazer sql para somente o recado da pessoa
+			
+			criteria.select(member).orderBy(cb.desc(member.get("dataParaExibicao")));
 			return em.createQuery(criteria).getResultList();
 	
 		}catch(NoResultException nre){
@@ -80,6 +107,14 @@ public class RecadoService extends Service implements Serializable {
 	public List<RecadoDTO> findAllDTO(){
 		List<RecadoDTO> recadosDto = new ArrayList<>();
 		for(Recado r : findAll()){
+			recadosDto.add(r.getDTO());
+		}
+		
+		return recadosDto;
+	}
+	public List<RecadoDTO> findAllDTO(String idMember){
+		List<RecadoDTO> recadosDto = new ArrayList<>();
+		for(Recado r : findAll(idMember)){
 			recadosDto.add(r.getDTO());
 		}
 		
@@ -103,6 +138,7 @@ public class RecadoService extends Service implements Serializable {
 			user.setDescricao(recado.getDescricao());
 			user.setNome(recado.getNome());
 			user.setCodigo(recado.getCodigo());
+			user.setDataParaExibicao(recado.getDataInicio()!=null?recado.getDataInicio():new Date());
 			
 			em.persist(user);
 			
@@ -215,6 +251,74 @@ public class RecadoService extends Service implements Serializable {
 		}
 	}
 
+	public void saveAwnser(RecadoDestinatarioDTO dto) {
+		RecadoDestinatario user = null;
+		try {
+
+			RecadoDestinatarioDTO recDes = findRecadoDestinatario(dto.getRecado().getId()+"", dto.getDestinatario().getId()+"");
+
+			if(recDes == null){
+				log.info("Registering recadoDestinatario" + dto.getId());
+				
+				if (dto.getId() != null && dto.getId() != 0L) {
+					user = findByIdRecadoDestinatario(dto.getId());
+				} else {
+					user = new RecadoDestinatario();
+				}
+				user.setDestinatario(em.find(Member.class, dto.getDestinatario().getId()));
+				user.setRecado(em.find(Recado.class, dto.getRecado().getId()));
+				user.setResposta(dto.getResposta());
+				user.setRespostaExtenso(dto.getRespostaExtenso());
+				
+				
+				em.persist(user);
+			}
+			
+		} catch (ConstraintViolationException ce) {
+			// Handle bean validation issues
+			// builder = createViolationResponse(ce.getConstraintViolations());
+		} catch (ValidationException e) {
+			// Handle the unique constrain violation
+			Map<String, String> responseObj = new HashMap<>();
+			responseObj.put("email", "Email taken");
+
+		} catch (Exception e) {
+			// Handle generic exceptions
+			Map<String, String> responseObj = new HashMap<>();
+			responseObj.put("error", e.getMessage());
+
+			e.printStackTrace();
+		}
+
+//		return user;
+		
+		
+	}
+	
+	public RecadoDestinatarioDTO findRecadoDestinatario(String idRecado, String idDestinatario) {
+		try {
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+			CriteriaQuery<RecadoDestinatario> criteria = cb.createQuery(RecadoDestinatario.class);
+			Root<RecadoDestinatario> member = criteria.from(RecadoDestinatario.class);
+
+			Predicate whereLogin = null;
+			Predicate whereSenha = null;
+
+			whereLogin = cb.equal(member.get("recado").get("id"), idRecado);
+			whereSenha = cb.equal(member.get("destinatario").get("id"), idDestinatario);
+			criteria.select(member).where(whereLogin,whereSenha);
+
+			criteria.select(member);
+			return em.createQuery(criteria).getSingleResult().getDTO();
+
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	
 
 }
 

@@ -87,7 +87,8 @@ public class MemberRegistration implements Serializable{
 	}
 	
 	public MemberDTO findByIdDTO(Long id) {
-		return em.find(Member.class, id).getDTO();
+		Member m = em.find(Member.class, id); 
+ 		return m.getDTO();
 	}
 	
 	public String fundando() {
@@ -231,8 +232,12 @@ public class MemberRegistration implements Serializable{
     }
     
     public MemberDTO findByPhoneDTO(String phoneNumber){
+    	Object retorno = findByPhone(phoneNumber); 
+    	if(retorno != null){
+    		return ((Member)retorno).getDTO();
+    	}
     	
-    	return findByPhone(phoneNumber).getDTO();
+    	return null;
     }
     
     private Member isInterMember(Member member) {
