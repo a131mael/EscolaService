@@ -1,6 +1,11 @@
+org\escola\util\Formatador.class
 org\escola\service\RecadoService.class
+org\escola\util\Util.class
 org\escola\service\MemberRegistration.class
 EscolaServices\org\aaf\services\NewSessionBean.class
 org\escola\util\Service.class
+org\escola\service\AlunoService.class
+org\escola\util\CONSTANTES.class
 org\escola\service\GradeService.class
 org\escola\util\JsonReader.class
+org\escola\util\Verificador.class

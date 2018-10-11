@@ -112,6 +112,7 @@ public class RecadoService extends Service implements Serializable {
 		
 		return recadosDto;
 	}
+	
 	public List<RecadoDTO> findAllDTO(String idMember){
 		List<RecadoDTO> recadosDto = new ArrayList<>();
 		for(Recado r : findAll(idMember)){
