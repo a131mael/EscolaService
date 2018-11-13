@@ -23,6 +23,7 @@ import org.escola.enums.DisciplinaEnum;
 import org.escola.model.Aluno;
 import org.escola.model.AlunoAvaliacao;
 import org.escola.model.Boleto;
+import org.escola.model.ContratoAluno;
 import org.escola.util.CONSTANTES;
 import org.escola.util.Formatador;
 import org.escola.util.Service;
@@ -79,10 +80,8 @@ public class AlunoService extends Service implements Serializable {
 	}
 
 	public String enviarBoletoEmail(long idcrianca, int mesBoletoInt,String email) {
-		System.out.println("xxpt 1 ");
 		Boleto bol = getBoletoMe(mesBoletoInt, idcrianca);
-		System.out.println("xxpt XX  " + bol);
-		byte[] anexoPDF = byteArrayPDFBoleto(getBoletoFinanceiro(bol), bol.getPagador());
+		byte[] anexoPDF = byteArrayPDFBoleto(getBoletoFinanceiro(bol), bol.getPagador(), bol.getContrato());
 		System.out.println("xxpt 2 ");
 		String corpoEmail = "<!DOCTYPE html><html><body><p><h2><center>Colégio Adonai.</center></h2><center>"
 				+ "<a href=\"https://ibb.co/mF1WjR\"><img src=\"https://preview.ibb.co/dPMmJm/logo.jpg\" "
@@ -96,7 +95,7 @@ public class AlunoService extends Service implements Serializable {
 				+ "style=\"width:365px;height:126px;border:0;\"></a></body></html>";
 		corpoEmail = corpoEmail.replace("#vencimentoBoleto", Formatador.formataData(bol.getVencimento()));
 		corpoEmail = corpoEmail.replace("#valorAtualBoleto", Formatador.valorFormatado(Verificador.getValorFinal(bol)));
-		corpoEmail = corpoEmail.replace("#nomeResponsavel", bol.getPagador().getNomeResponsavel());
+		corpoEmail = corpoEmail.replace("#nomeResponsavel", bol.getContrato().getNomeResponsavel());
 		corpoEmail = corpoEmail.replace("#mesBoleto", Formatador.getMes(bol.getVencimento()));
 
 		System.out.println("xxpt 3 ");
@@ -119,18 +118,18 @@ public class AlunoService extends Service implements Serializable {
 		return boletoFinanceiro;
 	}
 
-	public byte[] byteArrayPDFBoleto(org.aaf.financeiro.model.Boleto boleto, Aluno aluno) {
+	public byte[] byteArrayPDFBoleto(org.aaf.financeiro.model.Boleto boleto, Aluno aluno, ContratoAluno contrato) {
 		Calendar c = Calendar.getInstance();
 		c.setTime(boleto.getVencimento());
 		CNAB240_SICOOB cnab = new CNAB240_SICOOB(2);
 
 		Pagador pagador = new Pagador();
-		pagador.setBairro(aluno.getBairro());
-		pagador.setCep(aluno.getCep());
-		pagador.setCidade(aluno.getCidade() != null ? aluno.getCidade() : "PALHOCA");
-		pagador.setCpfCNPJ(aluno.getCpfResponsavel());
-		pagador.setEndereco(aluno.getEndereco());
-		pagador.setNome(aluno.getNomeResponsavel());
+		pagador.setBairro(contrato.getBairro());
+		pagador.setCep(contrato.getCep());
+		pagador.setCidade(contrato.getCidade() != null ? contrato.getCidade() : "PALHOCA");
+		pagador.setCpfCNPJ(contrato.getCpfResponsavel());
+		pagador.setEndereco(contrato.getEndereco());
+		pagador.setNome(contrato.getNomeResponsavel());
 		pagador.setNossoNumero(boleto.getNossoNumero() + "");
 		pagador.setUF("SC");
 		List<org.aaf.financeiro.model.Boleto> boletos = new ArrayList<>();
