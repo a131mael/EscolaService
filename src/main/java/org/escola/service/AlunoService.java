@@ -24,6 +24,8 @@ import org.escola.model.Aluno;
 import org.escola.model.AlunoAvaliacao;
 import org.escola.model.Boleto;
 import org.escola.model.ContratoAluno;
+import org.escola.model.Professor;
+import org.escola.model.Turma;
 import org.escola.util.CONSTANTES;
 import org.escola.util.Formatador;
 import org.escola.util.Service;
@@ -49,6 +51,27 @@ public class AlunoService extends Service implements Serializable {
 	public Aluno findById(Long id) {
 		return em.find(Aluno.class, id);
 	}
+	
+	public Professor findProfessorAluno(Long idAluno) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT at.turma from  AlunoTurma at ");
+		sql.append("where 1 = 1");
+		sql.append("and  at.aluno.id = ");
+		sql.append(idAluno);
+		Query query = em.createQuery(sql.toString());
+		Turma t = (Turma) query.getResultList().get(0);
+
+		StringBuilder sql2 = new StringBuilder();
+		sql2.append("SELECT pt.professor from  ProfessorTurma pt ");
+		sql2.append("where 1 = 1");
+		sql2.append("and  pt.turma.id = ");
+		sql2.append(t.getId());
+		sql2.append("and  pt.professor.especialidade = 0");
+		Query query2 = em.createQuery(sql2.toString());
+		return (Professor) query2.getResultList().get(0);
+
+	}
+	
 
 	public float getAVGrade(Long idAluno, DisciplinaEnum disciplina, BimestreEnum bimestre, boolean recupecacao) {
 		StringBuilder sql = new StringBuilder();

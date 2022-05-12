@@ -24,8 +24,11 @@ import javax.validation.ValidationException;
 
 import org.aaf.dto.RecadoDTO;
 import org.aaf.dto.RecadoDestinatarioDTO;
+import org.escola.enums.TipoDestinatario;
 import org.escola.model.Member;
 import org.escola.model.Recado;
+import org.escola.model.RecadoCurtido;
+import org.escola.model.RecadoDescurtido;
 import org.escola.model.RecadoDestinatario;
 import org.escola.util.Service;
 
@@ -52,6 +55,62 @@ public class RecadoService extends Service implements Serializable {
 		return em.find(Recado.class, id);
 	}
 	
+	public Member findMemberById(Long id) {
+		return em.find(Member.class, id);
+	}
+	
+	public RecadoCurtido findCurtiuByIdRecado(Long id, Long idUsuario) {
+		try {
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+			CriteriaQuery<RecadoCurtido> criteria = cb.createQuery(RecadoCurtido.class);
+			Root<RecadoCurtido> member = criteria.from(RecadoCurtido.class);
+			
+			Predicate whereRecado = null;
+			Predicate whereUsuario = null;
+			Recado rec = findById(id);
+			Member mem = findMemberById(idUsuario);
+
+			whereRecado = cb.equal(member.get("recado"), rec);
+			whereUsuario = cb.equal(member.get("curtiu"), mem);
+			
+			criteria.select(member).where(whereRecado,whereUsuario);
+
+			criteria.select(member);
+			return em.createQuery(criteria).getSingleResult();
+
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public RecadoDescurtido findDescurtiuByIdRecado(Long id, Long idUsuario) {
+		try {
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+			CriteriaQuery<RecadoDescurtido> criteria = cb.createQuery(RecadoDescurtido.class);
+			Root<RecadoDescurtido> member = criteria.from(RecadoDescurtido.class);
+
+			Predicate whereRecado = null;
+			Predicate whereUsuario = null;
+			Recado rec = findById(id);
+			Member mem = findMemberById(idUsuario);
+
+			whereRecado = cb.equal(member.get("recado"), rec);
+			whereUsuario = cb.equal(member.get("curtiu"), mem);
+			
+			criteria.select(member).where(whereRecado,whereUsuario);
+
+			criteria.select(member);
+			return em.createQuery(criteria).getSingleResult();
+
+		} catch (NoResultException nre) {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
 	private RecadoDestinatario findByIdRecadoDestinatario(Long id) {
 		return em.find(RecadoDestinatario.class, id);
 	}
@@ -71,7 +130,12 @@ public class RecadoService extends Service implements Serializable {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			CriteriaQuery<Recado> criteria = cb.createQuery(Recado.class);
 			Root<Recado> member = criteria.from(Recado.class);
-			criteria.select(member).orderBy(cb.desc(member.get("dataParaExibicao")));
+			CriteriaQuery cq = criteria.select(member);
+			
+			Predicate where1 = cb.equal(member.get("aprovado"), true);
+			cq.where(where1);
+			
+			cq.orderBy(cb.desc(member.get("dataParaExibicao")));
 			return em.createQuery(criteria).getResultList();
 	
 		}catch(NoResultException nre){
@@ -134,6 +198,7 @@ public class RecadoService extends Service implements Serializable {
 				user = new Recado();
 			}
 			
+			user.setFilePergunta(recado.getFilePergunta());
 			user.setDataFim(recado.getDataFim());
 			user.setDataInicio(recado.getDataInicio());
 			user.setDescricao(recado.getDescricao());
@@ -296,6 +361,63 @@ public class RecadoService extends Service implements Serializable {
 		
 	}
 	
+	
+	public Recado save2(RecadoDTO recado) {
+		Recado user = null;
+		try {
+
+			log.info("Registering " + recado.getNome());
+
+			if (recado.getId() != null && recado.getId() != 0L) {
+				user = findById(recado.getId());
+			} else {
+				user = new Recado();
+			}
+
+			user.setDataFim(recado.getDataFim());
+			user.setDataInicio(recado.getDataInicio());
+			user.setDescricao(recado.getDescricao());
+			user.setNome(recado.getNome());
+			user.setCodigo(recado.getCodigo());
+			user.setBigQuestion(recado.isBigQuestion());
+			user.setDescricaoUnder(recado.getDescricaoUnder());
+			user.setFilePergunta(recado.getFilePergunta());
+			user.setFontSizeQuestion(recado.getFontSizeQuestion());
+			user.setId(recado.getId());
+			user.setOpcao1(recado.getOpcao1());
+			user.setOpcao2(recado.getOpcao2());
+			user.setOpcao3(recado.getOpcao3());
+			user.setOpcao4(recado.getOpcao4());
+			user.setOpcao5(recado.getOpcao5());
+			user.setOpcao6(recado.getOpcao6());
+			user.setRespostaBooleana(recado.isRespostaBooleana());
+			user.setQuestionario(recado.isQuestionario());
+			user.setRespostaAberta(recado.getRespostaAberta());
+			user.setDataParaExibicao(recado.getDataInicio() != null ? recado.getDataInicio() : new Date());
+			user.setTipoDestinatario(TipoDestinatario.values()[recado.getTipoDestinatario()]);
+
+			em.persist(user);
+
+		} catch (ConstraintViolationException ce) {
+			// Handle bean validation issues
+			// builder = createViolationResponse(ce.getConstraintViolations());
+		} catch (ValidationException e) {
+			// Handle the unique constrain violation
+			Map<String, String> responseObj = new HashMap<>();
+			responseObj.put("email", "Email taken");
+
+		} catch (Exception e) {
+			// Handle generic exceptions
+			Map<String, String> responseObj = new HashMap<>();
+			responseObj.put("error", e.getMessage());
+
+			e.printStackTrace();
+		}
+
+		return user;
+	}
+
+	
 	public RecadoDestinatarioDTO findRecadoDestinatario(String idRecado, String idDestinatario) {
 		try {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -319,7 +441,58 @@ public class RecadoService extends Service implements Serializable {
 		}
 	}
 
+	public void  curtir(String idRecado, String usuario){
+		
+		Recado recado = findById(Long.parseLong(idRecado));
+		RecadoCurtido rc = findCurtiuByIdRecado(Long.parseLong(idRecado),Long.parseLong(usuario));
+		if(rc == null){
+			rc = new RecadoCurtido();
+			rc.setCurtiu(findMemberById(Long.parseLong(usuario)));
+			rc.setRecado(recado);
+			em.persist(rc);
+			
+			RecadoDescurtido rcdesc = findDescurtiuByIdRecado(Long.parseLong(idRecado),Long.parseLong(usuario));
+			if(rcdesc != null){
+				em.remove(rcdesc);
+			}
+		}
+	}
 	
+	public void desCurtir(String idRecado, String usuario){
 
+		Recado recado = findById(Long.parseLong(idRecado));
+
+		RecadoDescurtido rc = findDescurtiuByIdRecado(Long.parseLong(idRecado),Long.parseLong(usuario));
+		if(rc == null){
+			rc = new RecadoDescurtido();
+			rc.setCurtiu(findMemberById(Long.parseLong(usuario)));
+			rc.setRecado(recado);
+			em.persist(rc);
+			
+			
+			RecadoCurtido rcur = findCurtiuByIdRecado(Long.parseLong(idRecado),Long.parseLong(usuario));
+			if(rcur != null){
+				em.remove(rcur);
+			}
+		}
+	}
+	
+	public boolean curti(String idRecado, String idUsuario){
+		RecadoCurtido rcur = findCurtiuByIdRecado(Long.parseLong(idRecado),Long.parseLong(idUsuario));
+		if(rcur == null){
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
+	public boolean descurti(String idRecado, String idUsuario){
+		RecadoDescurtido rc = findDescurtiuByIdRecado(Long.parseLong(idRecado),Long.parseLong(idUsuario));
+		if(rc == null){
+			return false;
+		}else{
+			return true;
+		}
+	}
 }
 

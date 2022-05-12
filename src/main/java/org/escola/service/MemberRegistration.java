@@ -38,66 +38,88 @@ import org.escola.model.Recado;
 
 // The @Stateless annotation eliminates the need for manual transaction demarcation
 @Stateless
-public class MemberRegistration implements Serializable{
+public class MemberRegistration implements Serializable {
 
-    /**
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 4207034372324039549L;
 
+	@Inject
+	private Logger log;
 
 	@Inject
-    private Logger log;
+	private EntityManager em;
 
-    @Inject
-    private EntityManager em;
+	@Inject
+	private Event<Member> memberEventSrc;
 
-    @Inject
-    private Event<Member> memberEventSrc;
-    
+	public void register(MemberDTO member) throws Exception {
+		log.info("Registering " + member.getName());
+		Member m = new Member();
+		if (member.getId() != null) {
+			m = findById(member.getId());
+		}
+		m.setEmail(member.getEmail());
+		m.setLogin(member.getLogin());
+		m.setName(member.getName());
+		m.setSenha(member.getSenha());
+		m.setTokenFCM(member.getTokenFCM());
+		m.setBairro(member.getBairro());
+		m.setCep(member.getCep());
+		m.setCidade(member.getCidade());
+		m.setContatoEmail1(member.getContatoEmail1());
+		m.setContatoEmail2(member.getContatoEmail2());
+		m.setContatoTelefone1(member.getContatoTelefone1());
+		m.setContatoTelefone2(member.getContatoTelefone2());
+		m.setContatoTelefone3(member.getContatoTelefone3());
+		m.setContatoTelefone4(member.getContatoTelefone4());
+		m.setContatoTelefone5(member.getContatoTelefone5());
+		m.setCpf(member.getCpf());
+		m.setEndereco(member.getEndereco());
+		m.setRg(member.getRg());
 
-    public void register(MemberDTO member) throws Exception {
-        log.info("Registering " + member.getName());
-        Member m = new Member();
-        if(member.getId() != null){
-        	m = findById(member.getId());
-        }
-        m.setEmail(member.getEmail());
-        m.setLogin(member.getLogin());
-        m.setName(member.getName());
-        m.setSenha(member.getSenha());
-        m.setTokenFCM(member.getTokenFCM());
-        
-        em.persist(m);
-        /*memberEventSrc.fire(member);*/
-    }
-    
-    public Member login(Member member) throws Exception {
-    	Member m = findMember(member);
-    	
-    	return m;
-    }
-    
-    public Member findById(EntityManager em, Long id) {
+		em.persist(m);
+		/* memberEventSrc.fire(member); */
+	}
+
+	public void SavePhoto(MemberDTO member) throws Exception {
+		log.info("Registering " + member.getName());
+		Member m = new Member();
+		if (member.getId() != null) {
+			m = findById(member.getId());
+		}
+		m.setFoto(member.getFoto());
+
+		em.persist(m);
+		/* memberEventSrc.fire(member); */
+	}
+
+	public Member login(Member member) throws Exception {
+		Member m = findMember(member);
+
+		return m;
+	}
+
+	public Member findById(EntityManager em, Long id) {
 		return em.find(Member.class, id);
 	}
 
 	public Member findById(Long id) {
 		return em.find(Member.class, id);
 	}
-	
+
 	public MemberDTO findByIdDTO(Long id) {
-		Member m = em.find(Member.class, id); 
- 		return m.getDTO();
+		Member m = em.find(Member.class, id);
+		return m.getDTO();
 	}
-	
+
 	public String fundando() {
 		return "fundando";
 	}
-    
-	
-    private Member findMember(Member m){
-    	Member member = null;
+
+	private Member findMember(Member m) {
+		Member member = null;
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT m from  Member m ");
 		sql.append("where (m.login = '");
@@ -107,25 +129,24 @@ public class MemberRegistration implements Serializable{
 		sql.append("' ) and m.senha = '");
 		sql.append(m.getSenha());
 		sql.append("'");
-		
+
 		Query query = em.createQuery(sql.toString());
-		 
-		try{
+
+		try {
 			member = (Member) query.getSingleResult();
-		}catch (NoResultException ne) {
-			
-		}catch (NonUniqueResultException nure) {
+		} catch (NoResultException ne) {
+
+		} catch (NonUniqueResultException nure) {
 			System.out.println(nure);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    	
-    	return member;
-    }
-    
-    public Member findMember(String login, String senha){
-    	Member member = null;
+
+		return member;
+	}
+
+	public Member findMember(String login, String senha) {
+		Member member = null;
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT m from  Member m ");
 		sql.append("where (m.login = '");
@@ -135,24 +156,23 @@ public class MemberRegistration implements Serializable{
 		sql.append("' ) and m.senha = '");
 		sql.append(senha);
 		sql.append("'");
-		
+
 		Query query = em.createQuery(sql.toString());
-		 
-		try{
+
+		try {
 			member = (Member) query.getSingleResult();
-		}catch (NoResultException ne) {
-			
-		}catch (NonUniqueResultException nure) {
+		} catch (NoResultException ne) {
+
+		} catch (NonUniqueResultException nure) {
 			System.out.println(nure);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    	
-    	return member;
-    }
-    
-    public MemberDTO findByLoginSenha(String login, String senha) {
+
+		return member;
+	}
+
+	public MemberDTO findByLoginSenha(String login, String senha) {
 		try {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			CriteriaQuery<Member> criteria = cb.createQuery(Member.class);
@@ -163,7 +183,7 @@ public class MemberRegistration implements Serializable{
 
 			whereLogin = cb.equal(member.get("login"), login);
 			whereSenha = cb.equal(member.get("senha"), senha);
-			criteria.select(member).where(whereLogin,whereSenha);
+			criteria.select(member).where(whereLogin, whereSenha);
 
 			criteria.select(member);
 			return em.createQuery(criteria).getSingleResult().getDTO();
@@ -174,9 +194,9 @@ public class MemberRegistration implements Serializable{
 			return null;
 		}
 	}
-    
-    public MemberDTO findMemberDTO(String login, String senha){
-    	Member member = null;
+
+	public MemberDTO findMemberDTO(String login, String senha) {
+		Member member = null;
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT m from Member m ");
 		sql.append("where (m.login = '");
@@ -186,75 +206,100 @@ public class MemberRegistration implements Serializable{
 		sql.append("' ) and m.senha = '");
 		sql.append(senha);
 		sql.append("'");
-		
+
 		Query query = em.createQuery(sql.toString());
-		 
-		try{
+
+		System.out.println("--------------" + query);
+		try {
 			member = (Member) query.getSingleResult();
-		}catch (NoResultException ne) {
-			
-		}catch (NonUniqueResultException nure) {
+		} catch (NoResultException ne) {
+			System.out.println(ne);
+		} catch (NonUniqueResultException nure) {
 			System.out.println(nure);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    	
-		if(member == null){
+		System.out.println("--------------" + member);
+		if (member == null) {
 			return null;
 		}
-    	return member.getDTO();
-    }
-    
-    public Member findByPhone(String phoneNumber){
-    	String phoneClean = phoneNumber.replace(" ", "");
-    	Member member = null;
+		System.out.println("--------------" + member.getDTO());
+		return member.getDTO();
+	}
+
+	public MemberDTO findMemberByLoginDTO(String login) {
+		Member member = null;
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT m from Member m ");
+		sql.append("where (m.login = '");
+		sql.append(login);
+		sql.append("' or m.email = '");
+		sql.append(login);
+		sql.append("' )");
+
+		Query query = em.createQuery(sql.toString());
+
+		try {
+			member = (Member) query.getSingleResult();
+		} catch (NoResultException ne) {
+		} catch (NonUniqueResultException nure) {
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (member == null) {
+			return null;
+		}
+		return member.getDTO();
+	}
+
+	public Member findByPhone(String phoneNumber) {
+		String phoneClean = phoneNumber.replace(" ", "");
+		Member member = null;
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT m from  Member m ");
 		sql.append("where m.phoneNumber = '");
 		sql.append(phoneClean);
-		sql.append("' ") ;
-		
+		sql.append("' ");
+
 		Query query = em.createQuery(sql.toString());
-		 
-		try{
+
+		try {
 			member = (Member) query.getSingleResult();
-		}catch (NoResultException ne) {
-			
-		}catch (NonUniqueResultException nure) {
+		} catch (NoResultException ne) {
+
+		} catch (NonUniqueResultException nure) {
 			System.out.println(nure);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    	
-    	return member;
-    }
-    
-    public MemberDTO findByPhoneDTO(String phoneNumber){
-    	Object retorno = findByPhone(phoneNumber); 
-    	if(retorno != null){
-    		return ((Member)retorno).getDTO();
-    	}
-    	
-    	return null;
-    }
-    
-    private Member isInterMember(Member member) {
+
+		return member;
+	}
+
+	public MemberDTO findByPhoneDTO(String phoneNumber) {
+		Object retorno = findByPhone(phoneNumber);
+		if (retorno != null) {
+			return ((Member) retorno).getDTO();
+		}
+
+		return null;
+	}
+
+	private Member isInterMember(Member member) {
 		boolean inter = false;
-		if(member.getLogin().equalsIgnoreCase("admin")){
-			if(member.getSenha().equalsIgnoreCase("12345")){
+		if (member.getLogin().equalsIgnoreCase("admin")) {
+			if (member.getSenha().equalsIgnoreCase("12345")) {
 				member.setTipoMembro(TipoMembro.SECRETARIA);
 				inter = true;
 			}
 		}
-		if(member.getLogin().equalsIgnoreCase("professor")){
-			if(member.getSenha().equalsIgnoreCase("12345")){
+		if (member.getLogin().equalsIgnoreCase("professor")) {
+			if (member.getSenha().equalsIgnoreCase("12345")) {
 				member.setTipoMembro(TipoMembro.PROFESSOR);
 				inter = true;
 			}
 		}
 		return member;
 	}
-    
+
 }
